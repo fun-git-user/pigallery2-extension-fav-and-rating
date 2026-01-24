@@ -2,9 +2,14 @@
 // You need to prefix them with ./node_modules
 import {IExtensionObject} from './node_modules/pigallery2-extension-kit';
 import {PhotoMetadata} from './node_modules/pigallery2-extension-kit/lib/common/entities/PhotoDTO';
-import {UserRoles} from './node_modules/pigallery2-extension-kit/lib/common/entities/UserDTO';
-import {UserDTO} from './node_modules/pigallery2-extension-kit/lib/common/entities/UserDTO';
+import {UserDTO, UserRoles} from './node_modules/pigallery2-extension-kit/lib/common/entities/UserDTO';
 import {MediaEntity} from './node_modules/pigallery2-extension-kit/lib/backend/model/database/enitites/MediaEntity';
+import {
+  SearchQueryTypes,
+  TextSearch,
+  TextSearchQueryMatchTypes
+} from './node_modules/pigallery2-extension-kit/lib/common/entities/SearchQueryDTO';
+import {IMediaRequestBody} from './node_modules/pigallery2-extension-kit/lib/backend/model/extension/IExtension';
 
 // Including prod extension packages. You need to prefix them with ./node_modules
 // lodash does not have types
@@ -110,10 +115,12 @@ export const init = async (extension: IExtensionObject<TestConfig>): Promise<voi
         }
       ]
     }
-  }, async (params: ParamsDictionary, body: any, user: UserDTO, media: MediaEntity, repository: Repository<MediaEntity>) => {
+  }, async (params: ParamsDictionary, body: IMediaRequestBody, user: UserDTO, media: MediaEntity, repository: Repository<MediaEntity>) => {
     await repository.delete(media.id);
   });
 
+  // @ts-ignore
+  // @ts-ignore
   /**
    * (Optional) Adding a button to all media elements to be able to edit them
    */
@@ -131,41 +138,45 @@ export const init = async (extension: IExtensionObject<TestConfig>): Promise<voi
       body: 'Are you sure?',
       buttonString: 'Save',
       fields: [
-        'title', 'caption', 'cameraData', 'positionData',
-        'faces', 'size', 'creationDate', 'creationDateOffset', 'fileSize'
+         // @ts-ignore
+        'title', 'caption', 'cameraData', 'positionData', 'faces', 'keywords', 'size', 'creationDate', 'creationDateOffset',
+        'bitRate', 'duration', 'fileSize', 'fps'
       ]
     }
 
-  }, async (params: ParamsDictionary, body: any, user: UserDTO, media: MediaEntity, repository: Repository<MediaEntity>) => {
+  }, async (params: ParamsDictionary, body: IMediaRequestBody, user: UserDTO, media: MediaEntity, repository: Repository<MediaEntity>) => {
     // Update media entity with data from the body
-    if (body.data) {
+    if (body?.data?.fields) {
       // Update fields that are present in the body data
-      if (body.data.title !== undefined) {
-        media.metadata.title = body.data.title;
+      if (body.data.fields.title !== undefined) {
+        media.metadata.title = body.data.fields.title;
       }
-      if (body.data.caption !== undefined) {
-        media.metadata.caption = body.data.caption;
+      if (body.data.fields.caption !== undefined) {
+        media.metadata.caption = body.data.fields.caption;
       }
-      if (body.data.cameraData !== undefined) {
-        media.metadata.cameraData = JSON.parse(body.data.cameraData);
+      if (body.data.fields.cameraData !== undefined) {
+        media.metadata.cameraData = JSON.parse(body.data.fields.cameraData);
       }
-      if (body.data.positionData !== undefined) {
-        media.metadata.positionData = JSON.parse(body.data.positionData);
+      if (body.data.fields.positionData !== undefined) {
+        media.metadata.positionData = JSON.parse(body.data.fields.positionData);
       }
-      if (body.data.faces !== undefined) {
-        media.metadata.faces = JSON.parse(body.data.faces);
+      if (body.data.fields.faces !== undefined) {
+        media.metadata.faces = JSON.parse(body.data.fields.faces);
       }
-      if (body.data.size !== undefined) {
-        media.metadata.size = JSON.parse(body.data.size);
+      if (body.data.fields.keywords !== undefined) {
+        media.metadata.keywords = JSON.parse(body.data.fields.keywords);
       }
-      if (body.data.creationDate !== undefined) {
-        media.metadata.creationDate = body.data.creationDate;
+      if (body.data.fields.size !== undefined) {
+        media.metadata.size = JSON.parse(body.data.fields.size);
       }
-      if (body.data.creationDateOffset !== undefined) {
-        media.metadata.creationDateOffset = body.data.creationDateOffset;
+      if (body.data.fields.creationDate !== undefined) {
+        media.metadata.creationDate = body.data.fields.creationDate;
       }
-      if (body.data.fileSize !== undefined) {
-        media.metadata.fileSize = body.data.fileSize;
+      if (body.data.fields.creationDateOffset !== undefined) {
+        media.metadata.creationDateOffset = body.data.fields.creationDateOffset;
+      }
+      if (body.data.fields.fileSize !== undefined) {
+        media.metadata.fileSize = body.data.fields.fileSize;
       }
 
       // Save the updated media entity
@@ -187,6 +198,55 @@ export const init = async (extension: IExtensionObject<TestConfig>): Promise<voi
     },
     metadataFilter: [{field: 'rating', comparator: '>=', value: 4}],
     alwaysVisible: true
+  });
+
+
+  /**
+   * (Optional) Adding a (non-clickable) button to create a logical album and add photos to it.
+   */
+  extension.ui.addMediaButton({
+    name: 'Add to album',
+    svgIcon: {
+      viewBox: '0 0 512 512',
+      items: '<rect x="64" y="176" width="384" height="256" rx="28.87" ry="28.87" fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="32"/><path stroke="currentColor" stroke-linecap="round" stroke-miterlimit="10" stroke-width="32" d="M144 80h224M112 128h288"/>'
+    },
+    minUserRole: UserRoles.User,
+    apiPath: 'add-album',
+    popup: {
+      header: 'Add to Album',
+      body: 'Adding photo to the album</b>This will add a <album name> keyword to the given photo and create an album to show those keywords. On database reset or folder reindexing this info will be lost. Consider saving this keyword next to the photo as a sidecar file or using a second table to store this inforamtion.',
+      buttonString: 'Add',
+      customFields: [
+        {
+          id: 'album',
+          label: 'Album name',
+          type: 'string',
+          defaultValue: 'Album name',
+          required: true
+        }
+      ]
+    }
+  }, async (params: ParamsDictionary, body: IMediaRequestBody, user: UserDTO, media: MediaEntity, repository: Repository<MediaEntity>) => {
+    // Update media entity with data from the body
+    console.log(body);
+    if (body.data.customFields.album) {
+      const albumKey = 'pg-album:' + body.data.customFields.album.toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9]+/g, '-')          // Replace groups of non-alphanumeric characters with one hyphen
+        .replace(/^-+|-+$/g, '');             // Remove hyphens from the start or end
+      // Save the updated media entity
+      media.metadata.keywords = media.metadata.keywords || []; // make sure this media has keywords.
+      media.metadata.keywords.push(albumKey);
+      await repository.save(media);
+      await extension._app.objectManagers.AlbumManager.addIfNotExistSavedSearch(body.data.customFields.album, {
+        type: SearchQueryTypes.keyword,
+        value: albumKey,
+        matchType: TextSearchQueryMatchTypes.exact_match
+      } as TextSearch, false);
+      extension.Logger.debug('Media added to album: ' + body.data.customFields.album + '');
+    } else {
+      extension.Logger.warn('No album name provided');
+    }
   });
 
   /**
