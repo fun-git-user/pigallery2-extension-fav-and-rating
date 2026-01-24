@@ -199,7 +199,13 @@ export const init = async (extension: IExtensionObject<TestConfig>): Promise<voi
 
 
   /**
-   * (Optional) Adding a (non-clickable) button to create a logical album and add photos to it.
+   * (Optional) Adding a button to create a logical album and add photos to it.
+   * TODO: this is half baked solution. On reindex or DB reset (like after a version upgrade) the album will be lost or photos of the reindexed gallery will be missing.
+   * Possible workarounds:
+   * 1. (medium) store the keyword in a separate table and readd it after indexing (override that function in the extension)
+   * 2. (easy) Read the current DB after indexing and make sure that the indexing output contains all album tags.
+   * 3. (medium) Save the tag as a sidecar file next to the photo, so indexing will pick it up automatically.
+   *     * (hard) Alternative of this solution is to store the sidecar in the tmp folder and override the indexing to also read sidecars from the tmp folder.
    */
   extension.ui.addMediaButton({
     name: 'Add to album',
