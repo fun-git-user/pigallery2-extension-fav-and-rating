@@ -119,8 +119,6 @@ export const init = async (extension: IExtensionObject<TestConfig>): Promise<voi
     await repository.delete(media.id);
   });
 
-  // @ts-ignore
-  // @ts-ignore
   /**
    * (Optional) Adding a button to all media elements to be able to edit them
    */
@@ -138,7 +136,6 @@ export const init = async (extension: IExtensionObject<TestConfig>): Promise<voi
       body: 'Are you sure?',
       buttonString: 'Save',
       fields: [
-         // @ts-ignore
         'title', 'caption', 'cameraData', 'positionData', 'faces', 'keywords', 'size', 'creationDate', 'creationDateOffset',
         'bitRate', 'duration', 'fileSize', 'fps'
       ]
@@ -170,13 +167,13 @@ export const init = async (extension: IExtensionObject<TestConfig>): Promise<voi
         media.metadata.size = JSON.parse(body.data.fields.size);
       }
       if (body.data.fields.creationDate !== undefined) {
-        media.metadata.creationDate = body.data.fields.creationDate;
+        media.metadata.creationDate = parseInt(body.data.fields.creationDate, 10);
       }
       if (body.data.fields.creationDateOffset !== undefined) {
         media.metadata.creationDateOffset = body.data.fields.creationDateOffset;
       }
       if (body.data.fields.fileSize !== undefined) {
-        media.metadata.fileSize = body.data.fields.fileSize;
+        media.metadata.fileSize = parseInt(body.data.fields.fileSize, 10);
       }
 
       // Save the updated media entity
@@ -222,6 +219,7 @@ export const init = async (extension: IExtensionObject<TestConfig>): Promise<voi
           id: 'album',
           label: 'Album name',
           type: 'string',
+          keepValue: true, // make it easier to add multiple photos to the same album by remember the album name
           defaultValue: 'Album name',
           required: true
         }
@@ -230,6 +228,7 @@ export const init = async (extension: IExtensionObject<TestConfig>): Promise<voi
   }, async (params: ParamsDictionary, body: IMediaRequestBody, user: UserDTO, media: MediaEntity, repository: Repository<MediaEntity>) => {
     // Update media entity with data from the body
     if (body.data.customFields.album) {
+      // Crate the album keyword
       const albumKey = 'pg-album:' + body.data.customFields.album.toLowerCase()
         .trim()
         .replace(/[^a-z0-9]+/g, '-')          // Replace groups of non-alphanumeric characters with one hyphen
@@ -238,6 +237,7 @@ export const init = async (extension: IExtensionObject<TestConfig>): Promise<voi
       media.metadata.keywords = media.metadata.keywords || []; // make sure this media has keywords.
       media.metadata.keywords.push(albumKey);
       await repository.save(media);
+      // create the album if not exists
       await extension._app.objectManagers.AlbumManager.addIfNotExistSavedSearch(body.data.customFields.album, {
         type: SearchQueryTypes.keyword,
         value: albumKey,
