@@ -208,10 +208,11 @@ export const init = async (extension: IExtensionObject<TestConfig>): Promise<voi
     name: 'Add to album',
     svgIcon: {
       viewBox: '0 0 512 512',
-      items: '<rect x="64" y="176" width="384" height="256" rx="28.87" ry="28.87" fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="32"/><path stroke="currentColor" stroke-linecap="round" stroke-miterlimit="10" stroke-width="32" d="M144 80h224M112 128h288"/>'
+      items: '<rect x="64" y="176" width="384" height="256" rx="28.87" ry="28.87" fill="currentColor" stroke="currentColor" stroke-linejoin="round" stroke-width="32"/><path stroke="currentColor" stroke-linecap="round" stroke-miterlimit="10" stroke-width="32" d="M144 80h224M112 128h288"/>'
     },
-    minUserRole: UserRoles.User,
+    minUserRole: UserRoles.User, // guests/ sharing should not be able to add photos to albums
     apiPath: 'add-album',
+    reloadContent: true, // render newly added tag on the photos
     popup: {
       header: 'Add to Album',
       body: 'Adding photo to the album</b>This will add a <album name> keyword to the given photo and create an album to show those keywords. On database reset or folder reindexing this info will be lost. Consider saving this keyword next to the photo as a sidecar file or using a second table to store this inforamtion.',
@@ -228,7 +229,6 @@ export const init = async (extension: IExtensionObject<TestConfig>): Promise<voi
     }
   }, async (params: ParamsDictionary, body: IMediaRequestBody, user: UserDTO, media: MediaEntity, repository: Repository<MediaEntity>) => {
     // Update media entity with data from the body
-    console.log(body);
     if (body.data.customFields.album) {
       const albumKey = 'pg-album:' + body.data.customFields.album.toLowerCase()
         .trim()
