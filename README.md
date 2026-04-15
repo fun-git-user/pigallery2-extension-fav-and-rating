@@ -12,8 +12,6 @@ npm install
 npm run build
 ```
 
-Also see extension documentation at https://github.com/bpatrik/pigallery2/tree/master/extension
-
 ------------------------------------------------------------------------
 
 This extension will provide adding favorite and rating to image: 
