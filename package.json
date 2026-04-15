@@ -1,6 +1,6 @@
 {
-  "name": "pigallery2-sample-extension",
-  "version": "3.5.2",
+  "name": "pigallery2-extension-fav-and-rating",
+  "version": "0.1.1",
   "license": "MIT",
   "dependencies": {
     "lodash": "4.17.21",
