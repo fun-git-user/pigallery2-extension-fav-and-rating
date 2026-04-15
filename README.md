@@ -16,12 +16,4 @@ Also see extension documentation at https://github.com/bpatrik/pigallery2/tree/m
 
 ------------------------------------------------------------------------
 
-This sample extension adds the following and more: 
-
-Four new buttons to the top left of the photo:
- * Great photo if the photo has 4+ stars
- * edit button for editing a photo
- * delete button for deleting a photo (only from db)
- * Add photo to an album
-
-![Added buttons](buttons.png)
+This extension will provide adding favorite and rating to image: 
